@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Booking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d8edf2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            width: 85%;
+            max-width: 1200px;
+            background-color: #f5f2f2;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .login-container {
+                flex-direction: row;
+            }
+        }
+
+        .login-form {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #80dff0;
+        }
+
+        .login-form h1 {
+            margin-bottom: 20px;
+        }
+
+        .login-form form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .login-form input,
+        .login-form select,
+        .login-form button {
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            width: 90%;
+        }
+
+        .login-form button {
+            background-color: hsl(204, 53%, 45%);
+            color: #fff;
+            cursor: pointer;
+            border: rgb(6, 6, 73);
+        }
+
+        .login-form button:hover {
+            background-color: #3682cd;
+        }
+
+        .login-image {
+            flex: 1;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        @media (min-width: 768px) {
+            .login-image {
+                height: auto;
+            }
+        }
+
+        .login-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .container {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            border: 1px solid #8a8787;
+        }
+
+        th {
+            background-color: #1c1c1c;
+            color: #fff;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #093c45;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0c607d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <h1>Book Your Slot</h1>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <select id="role">
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                </select>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+        <div class="login-image">
+            <img src="https://img.freepik.com/free-vector/appointment-booking-with-woman-checking-smartphone_23-2148558795.jpg?w=826&t=st=1716360066~exp=1716360666~hmac=c31c7f9be316f76064e90897b2f01419321cb0edf82dd9ed8d056b33d37e084c"
+                alt="Login Image">
+        </div>
+    </div>
+
+    <div id="studentPage" class="container">
+        <h1>Available Slots</h1>
+        <table id="slotsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Slots will be dynamically inserted here -->
+            </tbody>
+        </table>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="facultyPage" class="container">
+        <h1>Manage Slots</h1>
+        <table id="facultySlotsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Slots will be dynamically inserted here -->
+            </tbody>
+        </table>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Predefined users
+        const users = {
+            student: {
+                username: 'student',
+                password: 'student123'
+            },
+            faculty: {
+                username: 'faculty',
+                password: 'faculty123'
+            }
+        };
+
+        const startDate = new Date(); // Today's date
+        const endDate = new Date(); // Set your end date here
+        endDate.setDate(endDate.getDate() + 7); // Assuming you want slots for the next 7 days
+
+        const times = ['09:30 AM', '10:30 AM', '11:30 AM', '01:30 PM', '02:30 PM']; // Sample times
+        const slots = [];
+
+        // Generate dates and times
+        for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+            const formattedDate = new Date(date).toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+            times.forEach(time => {
+                slots.push({
+                    date: formattedDate,
+                    time: time,
+                    booked: false,
+                    user: ''
+                });
+            });
+        }
+
+        // Function to load slots from local storage or use default slots
+        function loadSlots() {
+            const storedSlots = localStorage.getItem('slots');
+            return storedSlots ? JSON.parse(storedSlots) : slots;
+        }
+
+        // Function to save slots to local storage
+        function saveSlots(slots) {
+            localStorage.setItem('slots', JSON.stringify(slots));
+        }
+
+        // Function to handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            // Validate login credentials
+            if (username === users[role].username && password === users[role].password) {
+                localStorage.setItem('role', role);
+                document.querySelector('.login-container').style.display = 'none';
+                if (role === 'student') {
+                    document.getElementById('studentPage').style.display = 'block';
+                    renderSlots('student');
+                } else if (role === 'faculty') {
+                    document.getElementById('facultyPage').style.display = 'block';
+                    renderSlots('faculty');
+                }
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+
+        // Function to render slots table for faculty and student
+        function renderSlots(role) {
+            const slotsTableBody = document.querySelector(role === 'student' ? '#slotsTable tbody' : '#facultySlotsTable tbody');
+            slotsTableBody.innerHTML = '';
+            const slots = loadSlots();
+
+            // Filter out duplicate dates
+            const uniqueDates = Array.from(new Set(slots.map(slot => slot.date)));
+
+            uniqueDates.forEach(date => {
+                const row = document.createElement('tr');
+
+                const dateCell = document.createElement('td');
+                dateCell.textContent = date;
+                row.appendChild(dateCell);
+
+                const statusCell = document.createElement('td');
+                const bookedSlots = slots.filter(slot => slot.date === date && slot.booked);
+                const isBooked = bookedSlots.length > 0;
+                statusCell.textContent = isBooked ? 'Some slots booked' : 'Available';
+                row.appendChild(statusCell);
+
+                const actionCell = document.createElement('td');
+                if (role === 'student') {
+                    if (!isBooked) {
+                        const form = document.createElement('form');
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.name = 'user';
+                        input.placeholder = 'Your name';
+                        input.required = true;
+                        form.appendChild(input);
+
+                        const timeSelect = document.createElement('select');
+                        times.forEach(time => {
+                            const option = document.createElement('option');
+                            option.value = time;
+                            option.textContent = time;
+                            timeSelect.appendChild(option);
+                        });
+                        form.appendChild(timeSelect);
+
+                        const button = document.createElement('button');
+                        button.type = 'submit';
+                        button.textContent = 'Book';
+                        form.appendChild(button);
+
+                        form.onsubmit = (event) => {
+                            event.preventDefault();
+                            bookSlot(slots.findIndex(slot => slot.date === date && slot.booked === false), input.value, timeSelect.value);
+                        };
+
+                        actionCell.appendChild(form);
+                    }
+                } else if (role === 'faculty') {
+                    if (isBooked) {
+                        const approveButton = document.createElement('button');
+                        approveButton.textContent = 'Approve';
+                        approveButton.onclick = () => {
+                            // Logic to approve the slot (You can customize this as per your requirements)
+                            alert('Slot approved!');
+                            renderSlots('faculty');
+                        };
+                        actionCell.appendChild(approveButton);
+
+                        const denyButton = document.createElement('button');
+                        denyButton.textContent = 'Deny';
+                        denyButton.onclick = () => {
+                            const index = slots.findIndex(slot => slot.date === date && slot.booked);
+                            slots[index].booked = false;
+                            slots[index].user = '';
+                            slots[index].time = '';
+                            saveSlots(slots);
+                            renderSlots('faculty');
+                            // Optionally, you can notify the user that the slot has been denied.
+                            alert('Slot denied!');
+                        };
+
+                        actionCell.appendChild(denyButton);
+
+                        // Display booked slots
+                        const bookedSlotsList = document.createElement('ul');
+                        bookedSlots.forEach(slot => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = `${slot.time} - ${slot.user}`;
+                            bookedSlotsList.appendChild(listItem);
+                        });
+                        actionCell.appendChild(bookedSlotsList);
+                    }
+                }
+
+                row.appendChild(actionCell);
+
+                slotsTableBody.appendChild(row);
+            });
+
+            // Clear previously appended Approved Slots button
+            const existingApprovedSlotsButton = document.getElementById('approvedSlotsButton');
+            if (existingApprovedSlotsButton) {
+                existingApprovedSlotsButton.remove();
+            }
+
+            // Add Approved Slots button for both student and faculty
+            const approvedSlotsButtonNew = document.createElement('button');
+            approvedSlotsButtonNew.textContent = 'Approved Slots';
+            approvedSlotsButtonNew.id = 'approvedSlotsButton';
+            approvedSlotsButtonNew.onclick = () => {
+                // Logic to handle approved slots (You can customize this as per your requirements)
+                const approvedSlots = slots.filter(slot => slot.booked);
+                const approvedSlotsDetails = approvedSlots.map(slot => `${slot.time} - ${slot.user}, Booked on: ${slot.date}`);
+                alert(`Approved Slots:\n${approvedSlotsDetails.join('\n')}`);
+            };
+            document.getElementById(role === 'student' ? 'studentPage' : 'facultyPage').appendChild(approvedSlotsButtonNew);
+        }
+
+        // Function to book a slot
+        function bookSlot(index, user, selectedTime) {
+            const slots = loadSlots();
+            slots[index].booked = true;
+            slots[index].user = user;
+            slots[index].time = selectedTime;
+            saveSlots(slots);
+            if (localStorage.getItem('role') === 'student') {
+                renderSlots('student');
+            } else if (localStorage.getItem('role') === 'faculty') {
+                renderSlots('faculty');
+            }
+            sendEmail('student@example.com', 'Slot Booking Confirmation', `Your slot on ${slots[index].date} at ${slots[index].time} has been booked.`);
+        }
+
+        // Function to send email (simulated)
+        function sendEmail(to, subject, message) {
+            console.log(`Email sent to: ${to}\nSubject: ${subject}\nMessage: ${message}`);
+        }
+
+        // Function to handle logout
+        function logout() {
+            localStorage.removeItem('role');
+            document.getElementById('studentPage').style.display = 'none';
+            document.getElementById('facultyPage').style.display = 'none';
+            document.querySelector('.login-container').style.display = 'flex';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+        // Initialize slots on page load
+        saveSlots(slots);
+    </script>
+</body>
+
+</html>
